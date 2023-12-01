@@ -64,13 +64,13 @@ function App() {
       setLoadingGenerateQR(true);
 
       try {
-        toast.info('Generating QR Code...', {
-          position: toast.POSITION.BOTTOM_RIGHT,
-        });
         const response = await axios.post(`${backendURL}/generate_qr_code`, {
           data: text,
         });
-
+        
+        toast.info('Generating QR Code...', {
+          position: toast.POSITION.BOTTOM_RIGHT,
+        });
         // Set the QR code URL from the response
         setQRCodeURL(`${backendURL}/qrcodes/${response.data.filename}`);
         // Set the flag to indicate that the QR code has been generated
@@ -94,21 +94,19 @@ function App() {
 
   const downloadQRCode = () => {
     const filename = `${text.replace("://", "_").replace("/", "_")}.png`;
-  
-    // Show a toast indicating that the download has started
+   
+
     toast.info('Download started', {
       position: toast.POSITION.BOTTOM_RIGHT,
     });
-  
-    // Use axios.get for the GET request
     axios({
       method: 'get',
       url: `${backendURL}/download_qr_code/${filename}`,
       responseType: 'blob',
     })
-      .then((response) => {
-        const url = window.URL.createObjectURL(new Blob([response.data]));
-        const a = document.createElement('a');
+    .then((response) => {
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const a = document.createElement('a');
         a.href = url;
         a.download = filename;
         document.body.appendChild(a);
@@ -116,17 +114,14 @@ function App() {
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
   
-        // Add a 5-second delay before showing the success toast
-        setTimeout(() => {
-          // Show a success toast after the download is complete
-          toast.success('Download complete', {
-            position: toast.POSITION.BOTTOM_RIGHT,
-          });
-        }, 2000); // 5000 milliseconds = 5 seconds
+        toast.success('Download complete', {
+          position: toast.POSITION.BOTTOM_RIGHT,
+        });
+     
       })
       .catch((error) => {
         console.error('Axios error:', error);
-  
+
         // Add a 5-second delay before showing the error toast
         setTimeout(() => {
           // Show an error toast if the download fails
@@ -138,7 +133,6 @@ function App() {
   };
   
   
-
 
   useEffect(() => {
     sessionStorage.setItem("enteredURL", text);
@@ -274,14 +268,11 @@ function App() {
                   />
                   <a
                     href="#"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      downloadQRCode();
-                    }}
+                  onClick={downloadQRCode}
                     className="bg-green-600 text-white rounded-lg mt-2 font-medium text-sm px-5 py-2"
-                    disabled={loadingGenerateQR} 
+               
                   >
-                    {loadingGenerateQR ? "Downloading..." : "Download QR Code"}
+                    Download QR Code
                   </a>
                 </div>
               )}
