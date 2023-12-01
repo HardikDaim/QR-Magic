@@ -16,6 +16,8 @@ import aboutAnim from "./aboutAnim.json";
 import { Box, Paper, List, ListItem, ListItemText } from "@mui/material";
 import creatorAnim from "./creatorAnim.json";
 import backgroundImage from "./backgroundImage.json";
+import {ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 // import Splash from "./splash.js";
 
@@ -26,7 +28,7 @@ const darkTheme = createTheme({
 });
 
 function App() {
-  const backendURL = "https://qr-magic-backend.onrender.com"; 
+  const backendURL = "https://qr-magic-backend.onrender.com";
   const storedText = sessionStorage.getItem("enteredURL") || "";
   const [text, setText] = useState(storedText);
   const [qrCodeURL, setQRCodeURL] = useState("");
@@ -53,7 +55,6 @@ function App() {
 
   const [loadingGenerateQR, setLoadingGenerateQR] = useState(false);
 
-
   const generateQRCode = async () => {
     if (text.trim() === "") {
       // Alert the user to enter a URL
@@ -61,48 +62,87 @@ function App() {
     } else {
       // Set loading state to true while waiting for the response
       setLoadingGenerateQR(true);
-  
+
       try {
-        const response = await axios.post(
-          `${backendURL}/generate_qr_code`,
-          { data: text }
-        );
-  
+        toast.info('Generating QR Code...', {
+          position: toast.POSITION.BOTTOM_RIGHT,
+        });
+        const response = await axios.post(`${backendURL}/generate_qr_code`, {
+          data: text,
+        });
+
         // Set the QR code URL from the response
         setQRCodeURL(`${backendURL}/qrcodes/${response.data.filename}`);
         // Set the flag to indicate that the QR code has been generated
         setQRCodeGenerated(true);
+
+        toast.success('QR Code Generated Successfully', {
+          position: toast.POSITION.BOTTOM_RIGHT,
+        });
       } catch (error) {
         console.error("Error generating QR code:", error.message);
         // Handle the error, e.g., show an error message to the user
+        toast.error('QR Code not Generated! Try Again', {
+          position: toast.POSITION.BOTTOM_RIGHT,
+        });
       } finally {
         // Set loading state to false after the response is received
         setLoadingGenerateQR(false);
       }
     }
   };
-  
+
   const downloadQRCode = () => {
-    if (qrCodeURL) {
-      setDownloadURL(`/download_qr_code/${encodeURIComponent("qr_code.png")}`);
-    }
+    const filename = `${text.replace("://", "_").replace("/", "_")}.png`;
+  
+    // Show a toast indicating that the download has started
+    toast.info('Download started', {
+      position: toast.POSITION.BOTTOM_RIGHT,
+    });
+  
+    // Use axios.get for the GET request
+    axios({
+      method: 'get',
+      url: `${backendURL}/download_qr_code/${filename}`,
+      responseType: 'blob',
+    })
+      .then((response) => {
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+  
+        // Add a 5-second delay before showing the success toast
+        setTimeout(() => {
+          // Show a success toast after the download is complete
+          toast.success('Download complete', {
+            position: toast.POSITION.BOTTOM_RIGHT,
+          });
+        }, 2000); // 5000 milliseconds = 5 seconds
+      })
+      .catch((error) => {
+        console.error('Axios error:', error);
+  
+        // Add a 5-second delay before showing the error toast
+        setTimeout(() => {
+          // Show an error toast if the download fails
+          toast.error('Download failed', {
+            position: toast.POSITION.BOTTOM_RIGHT,
+          });
+        }, 2000); // 5000 milliseconds = 5 seconds
+      });
   };
+  
+  
+
 
   useEffect(() => {
     sessionStorage.setItem("enteredURL", text);
   }, [text]);
-
-  useEffect(() => {
-    // When downloadURL changes, trigger the download
-    if (downloadURL) {
-      const link = document.createElement("a");
-      link.href = downloadURL;
-      link.download = "qr_code.png";
-      link.click();
-      // Reset the downloadURL to prevent re-downloading the same file
-      setDownloadURL(null);
-    }
-  }, [downloadURL]); // Add qrCodeURL to the dependency array
 
   const typedTextRef = useRef(null);
 
@@ -126,6 +166,7 @@ function App() {
     <>
       <ThemeProvider theme={darkTheme}>
         <CssBaseline />
+        <ToastContainer />
 
         <div>
           <Header />
@@ -141,8 +182,13 @@ function App() {
             }}
           >
             {/* Lottie Animation */}
-            <Box position="absolute" width="100%" height="100%" zIndex="-1"
-              display={{ xs:'none', sm:'block', md: 'block', lg: 'block' }}>
+            <Box
+              position="absolute"
+              width="100%"
+              height="100%"
+              zIndex="-1"
+              display={{ xs: "none", sm: "block", md: "block", lg: "block" }}
+            >
               <Lottie
                 animationData={backgroundImage}
                 height="100%"
@@ -227,12 +273,15 @@ function App() {
                     style={{ maxWidth: "100%" }}
                   />
                   <a
-                    href={qrCodeURL}
-                    download="qr_code.png"
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      downloadQRCode();
+                    }}
                     className="bg-green-600 text-white rounded-lg mt-2 font-medium text-sm px-5 py-2"
-                    onClick={downloadQRCode}
+                    disabled={loadingGenerateQR} 
                   >
-                    Download QR Code
+                    {loadingGenerateQR ? "Downloading..." : "Download QR Code"}
                   </a>
                 </div>
               )}
@@ -241,7 +290,7 @@ function App() {
           <Grid
             container
             alignItems="center"
-            sx={{ backgroundColor: "#1E1E1E" , padding: "20px"}}
+            sx={{ backgroundColor: "#1E1E1E", padding: "20px" }}
           >
             <Grid item xs={12} lg={6}>
               <Typography
@@ -301,7 +350,7 @@ function App() {
               WebkitBackgroundClip: "text",
               backgroundClip: "text",
               // marginTop: "20px",
-              padding: "20px"
+              padding: "20px",
             }}
           >
             Key Features
@@ -342,7 +391,7 @@ function App() {
           <Grid
             container
             alignItems="center"
-            sx={{ backgroundColor: "#1E1E1E",  padding: "20px" }}
+            sx={{ backgroundColor: "#1E1E1E", padding: "20px" }}
           >
             <Grid item xs={12} lg={6}>
               <Typography
@@ -400,7 +449,7 @@ function App() {
               WebkitBackgroundClip: "text",
               backgroundClip: "text",
               // marginTop: "20px",
-              padding: "20px"
+              padding: "20px",
             }}
           >
             More Projects ?
@@ -417,7 +466,6 @@ function App() {
                 backgroundColor: "#fff",
                 color: "black",
                 marginTop: 2, // Adjust the margin for small screens
-                // width: "100%",
               }}
               onClick={openProjectsLink}
             >
