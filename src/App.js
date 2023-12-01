@@ -26,7 +26,7 @@ const darkTheme = createTheme({
 });
 
 function App() {
-  const backendURL = "https://qr-magic.onrender.com"; 
+  const backendURL = "https://qr-magic-backend.onrender.com"; 
   const storedText = sessionStorage.getItem("enteredURL") || "";
   const [text, setText] = useState(storedText);
   const [qrCodeURL, setQRCodeURL] = useState("");
