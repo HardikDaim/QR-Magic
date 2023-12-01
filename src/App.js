@@ -141,7 +141,8 @@ function App() {
             }}
           >
             {/* Lottie Animation */}
-            <Box position="absolute" width="100%" height="100%" zIndex="-1">
+            <Box position="absolute" width="100%" height="100%" zIndex="-1"
+              display={{ xs:'none', sm:'block', md: 'block', lg: 'block' }}>
               <Lottie
                 animationData={backgroundImage}
                 height="100%"
