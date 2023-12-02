@@ -62,15 +62,15 @@ function App() {
     } else {
       // Set loading state to true while waiting for the response
       setLoadingGenerateQR(true);
+      toast.info('Generating QR Code...', {
+        position: toast.POSITION.BOTTOM_RIGHT,
+      });
 
       try {
         const response = await axios.post(`${backendURL}/generate_qr_code`, {
           data: text,
         });
         
-        toast.info('Generating QR Code...', {
-          position: toast.POSITION.BOTTOM_RIGHT,
-        });
         // Set the QR code URL from the response
         setQRCodeURL(`${backendURL}/qrcodes/${response.data.filename}`);
         // Set the flag to indicate that the QR code has been generated
@@ -96,9 +96,9 @@ function App() {
     const filename = `${text.replace("://", "_").replace("/", "_")}.png`;
    
 
-    toast.info('Download started', {
-      position: toast.POSITION.BOTTOM_RIGHT,
-    });
+    // toast.info('Download started', {
+    //   position: toast.POSITION.BOTTOM_RIGHT,
+    // });
     axios({
       method: 'get',
       url: `${backendURL}/download_qr_code/${filename}`,
